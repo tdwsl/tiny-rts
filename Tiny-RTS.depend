@@ -1,0 +1,58 @@
+# depslib dependency file v1.0
+1641496917 source:/home/tyler/Documents/tiny-rts/initSDL.c
+	<SDL2/SDL.h>
+	<stdlib.h>
+	<stdio.h>
+	<stdbool.h>
+	"initSDL.h"
+
+1641209421 /home/tyler/Documents/tiny-rts/initSDL.h
+	<SDL2/SDL.h>
+
+1641496952 source:/home/tyler/Documents/tiny-rts/main.c
+	<SDL2/SDL.h>
+	<stdbool.h>
+	"initSDL.h"
+	"map.h"
+	"unit.h"
+	"ui.h"
+
+1641285136 /home/tyler/Documents/tiny-rts/map.h
+	<SDL2/SDL.h>
+	"unit.h"
+
+1641412218 /home/tyler/Documents/tiny-rts/unit.h
+	<SDL2/SDL.h>
+	<stdbool.h>
+
+1641412396 source:/home/tyler/Documents/tiny-rts/map.c
+	<SDL2/SDL.h>
+	<stdlib.h>
+	<stdbool.h>
+	"map.h"
+	"initSDL.h"
+	"unit.h"
+
+1641495491 source:/home/tyler/Documents/tiny-rts/unit.c
+	<SDL2/SDL.h>
+	<stdlib.h>
+	<stdbool.h>
+	"unit.h"
+	"initSDL.h"
+	"map.h"
+	"ui.h"
+
+1641297989 source:/home/tyler/Documents/tiny-rts/drawText.c
+	<SDL2/SDL.h>
+	"initSDL.h"
+	"drawText.h"
+
+1641297566 /home/tyler/Documents/tiny-rts/drawText.h
+
+1641301868 /home/tyler/Documents/tiny-rts/ui.h
+
+1641302103 source:/home/tyler/Documents/tiny-rts/ui.c
+	<SDL2/SDL.h>
+	"initSDL.h"
+	"ui.h"
+
