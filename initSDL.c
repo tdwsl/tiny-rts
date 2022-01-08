@@ -8,8 +8,6 @@
 	SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,\
 	640, 480,\
 	SDL_WINDOW_RESIZABLE
-#define WIDTH 160
-#define HEIGHT 120
 
 SDL_Renderer *renderer = NULL;
 SDL_Window *win = NULL;
@@ -42,6 +40,10 @@ void freeTextures() {
 }
 
 void initSDL() {
+    /* treat the touchpad like a mouse >:( */
+    sdlAssert(SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0"));
+    sdlAssert(SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "1"));
+
 	sdlAssert(SDL_Init(SDL_INIT_EVERYTHING) >= 0);
 	sdlAssert(win = SDL_CreateWindow(WPARMS));
 	sdlAssert(renderer = SDL_CreateRenderer(win, -1,
@@ -105,6 +107,15 @@ Uint32 getMouseState(int *x, int *y) {
     my -= dst.y;
     mx /= (float)dst.w/(float)WIDTH;
     my /= (float)dst.h/(float)HEIGHT;
+
+    if(mx < 0)
+        mx = 0;
+    if(my < 0)
+        my = 0;
+    if(mx >= WIDTH)
+        mx = WIDTH-1;
+    if(my >= HEIGHT)
+        my = HEIGHT-1;
 
     if(x)
         *x = mx;

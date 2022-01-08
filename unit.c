@@ -5,6 +5,7 @@
 #include "initSDL.h"
 #include "map.h"
 #include "ui.h"
+#include "fov.h"
 
 SDL_Texture *infantryTex = NULL;
 SDL_Texture *vehicleTex = NULL;
@@ -32,6 +33,7 @@ struct unit *newUnit(int x, int y, int type) {
     u->transport = 0;
     for(int i = 0; i < MAX_CARGOCAPACITY; i++)
         u->cargo[i] = 0;
+    u->mapBlocked = false;
 
     addUnit(u);
     return u;
@@ -137,6 +139,12 @@ void moveUnit(struct unit *u, int xm, int ym) {
 
     struct unit_stats stats = getUnitStats(u->type);
 
+    for(int i = 0; i < 1 + 3*!stats.infantry; i++)
+        if(tileBlocks((dx+i%2)/2, (dy+i/2)/2, stats.heightLevel) == 1) {
+            u->mapBlocked = true;
+            return;
+        }
+
     if(dx < 0 || dy < 0 || dx+!stats.infantry >= map.w*2 || dy+!stats.infantry >= map.h*2)
         return;
 
@@ -151,6 +159,8 @@ void moveUnit(struct unit *u, int xm, int ym) {
     u->x = dx;
     u->y = dy;
 
+    revealFov(u->x/2, u->y/2, 5);
+
     u->d = -1;
     for(int d = 0; d < 8 && u->d == -1; d++)
         if(ddirs[d*2] == xm && ddirs[d*2+1] == ym)
@@ -158,6 +168,9 @@ void moveUnit(struct unit *u, int xm, int ym) {
 }
 
 void unitNavTo(struct unit *u, int tx, int ty) {
+    if(u->mapBlocked)
+        return;
+
     if(u->x != u->px || u->y != u->py)
         return;
 
@@ -210,6 +223,9 @@ void updateUnits(int diff) {
         struct unit *u = units[i];
         struct unit_stats stats = getUnitStats(u->type);
 
+        if(getTile(fov, u->x/2, u->y/2))
+            revealFov(u->x/2, u->y/2, 5);
+
         if(u->x != u->px || u->y != u->py) {
             float inc = stats.speed;
             if(tileBlocks(u->px/2, u->py/2, stats.heightLevel) == 2)
@@ -243,8 +259,14 @@ void updateUnits(int diff) {
                     numUnits--;
                     i--;
                 }
-                else
+                else {
+                    if(u->targetX != u->target->x || u->targetY != u->target->y) {
+                        u->targetX = u->target->x;
+                        u->targetY = u->target->y;
+                        u->mapBlocked = false;
+                    }
                     unitNavTo(u, u->target->x, u->target->y);
+                }
             }
     }
 }
@@ -256,13 +278,14 @@ void unitTarget(struct unit *u, int tx, int ty) {
     if(tx < 0 || ty < 0 || tx+!stats.infantry >= map.w*2 || ty+!stats.infantry >= map.h*2)
         return;
 
-    for(int i = 0; i <= (!stats.infantry)*3; i++)
+    /*for(int i = 0; i <= (!stats.infantry)*3; i++)
         if(tileBlocks((tx+i%2)/2, (ty+i/2)/2, stats.heightLevel) == 1)
-            return;
+            return;*/
 
     u->targetX = tx;
     u->targetY = ty;
     u->targetMode = TARGET_TILE;
+    u->mapBlocked = false;
 }
 
 void unitTargetVehicle(struct unit *u, struct unit *v) {
@@ -281,7 +304,10 @@ void unitTargetVehicle(struct unit *u, struct unit *v) {
         return;
 
     u->targetMode = TARGET_VEHICLE;
+    u->targetX = v->x;
+    u->targetY = v->y;
     u->target = v;
+    u->mapBlocked = false;
 }
 
 void getUnitXY(struct unit *u, int *x, int *y) {
@@ -412,4 +438,40 @@ void drawUnitUI(struct unit *u, int x, int y) {
         sprintf(text, "%d/%d", num, stats.capacity);
         drawText(dst.x, dst.y+12, text);
     }
+}
+
+void drawMinimapUnits() {
+    for(int i = 0; i < numUnits; i++) {
+        struct unit *u = units[i];
+
+        if(getTile(fov, u->x/2, u->y/2))
+            return;
+
+        SDL_SetRenderDrawColor(renderer, 0xff, 0, 0, 0xff);
+        for(int j = 0; j < 4; j++)
+            SDL_RenderDrawPoint(renderer, WIDTH-40+4+(((u->x+0.5)/2)/(float)fov.w)*32, 4+(((u->y+0.5)/2)/(float)fov.h)*32);
+    }
+}
+
+void unitUnload(struct unit *u) {
+    if(tileBlocks(u->x/2, u->y/2, HEIGHTLEVEL_SHALLOW) == 1)
+    return;
+
+    struct unit_stats stats = getUnitStats(u->type);
+    for(int i = 0; i < stats.capacity; i++)
+        if(u->cargo[i]) {
+            u->cargo[i]->x = u->x;
+            u->cargo[i]->y = u->y;
+            u->cargo[i]->px = u->x;
+            u->cargo[i]->py = u->y;
+
+            if(u->targetMode == TARGET_TILE) {
+                u->cargo[i]->targetMode = TARGET_TILE;
+                u->cargo[i]->targetX = u->targetX;
+                u->cargo[i]->targetY = u->targetY;
+            }
+
+            addUnit(u->cargo[i]);
+            u->cargo[i] = 0;
+        }
 }

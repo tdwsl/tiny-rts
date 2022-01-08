@@ -44,5 +44,8 @@ void drawMap(int xo, int yo);
 void initMap(int w, int h, int t);
 int tileBlocks(int x, int y, int hlevel);
 struct map generatePathmap(struct unit *u, int x2, int y2);
+void initMinimap();
+void drawMinimap();
+void freeMinimap();
 
 #endif

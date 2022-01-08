@@ -6,6 +6,7 @@
 #include "unit.h"
 
 SDL_Texture *tileset = NULL;
+SDL_Texture *minimapTex = NULL;
 
 struct map map;
 
@@ -80,108 +81,6 @@ int tileBlocks(int x, int y, int hlevel) {
     return blocks(getTile(map, x, y), hlevel);
 }
 
-/*struct map generatePathmap(struct unit *u, int x2, int y2) {
-    struct unit_stats stats = getUnitStats(u->type);
-    int x1 = u->x, y1 = u->y;
-    int sz = 1 + !stats.infantry;
-    printf("generating\n");
-
-    struct map pmap;
-    pmap.w = map.w*2;
-    pmap.h = map.h*2;
-
-    pmap.arr = malloc(sizeof(int)*pmap.w*pmap.h);
-    for(int i = 0; i < pmap.w*pmap.h; i++) {
-        int mx = (i%pmap.w)/2;
-        int my = (i/pmap.w)/2;
-
-        pmap.arr[i] = blocks(map.arr[my*map.w+mx], stats.heightLevel)*-1;
-
-        for(int x = 0; x < sz; x++)
-            for(int y = 0; y < sz; y++) {
-                int mx = (i%pmap.w + x)/2;
-                int my = (i/pmap.w + y)/2;
-
-                int t = tileBlocks(mx, my, stats.heightLevel)*-1;
-                if(t == -1)
-                    pmap.arr[i] = t;
-
-                struct unit *ua = unitAt(u->x+x, u->y+y);
-                if(ua && ua != u)
-                    if(ua->x == ua->px && ua->y == ua->py)
-                        pmap.arr[i] = -1;
-            }
-    }
-    printf("pathmap yay\n");
-    printMap(pmap);
-
-    if(pmap.arr[y2*pmap.w+x2] == -1) {
-        free(pmap.arr);
-        pmap.arr = 0;
-        return pmap;
-    }
-
-    setTile(pmap, x2, y2, 1);
-    setTile(pmap, x2+1, y2, 1);
-    setTile(pmap, x2, y2+1, 1);
-    setTile(pmap, x2+1, y2+1, 1);
-
-    if(pmap.arr[y1*pmap.w+x1] == -1) {
-        free(pmap.arr);
-        pmap.arr = 0;
-        return pmap;
-    }
-    pmap.arr[y1*pmap.w+x1] = 0;
-
-    printf("doing\n");
-
-    int stuckDuration = 0;
-    for(int i = 1; !pmap.arr[y1*pmap.w+x1]; i++) {
-        printf("%d\n", i);
-        bool stuck = true;
-
-        for(int j = 0; j < pmap.w*pmap.h; j++) {
-            if(pmap.arr[j] != i)
-                continue;
-
-            stuck = false;
-
-            int x = j%pmap.w, y = j/pmap.w;
-            for(int d = 0; d < 8; d++) {
-                int t = getTile(pmap, x+ddirs[d*2], y+ddirs[d*2+1]);
-                if(t == 0 || t == -2)
-                    setTile(pmap, x+ddirs[d*2], y+ddirs[d*2+1], i+1);
-            }
-        }
-
-        for(int j = 0; j < pmap.w*pmap.h && !stuck; j++) {
-            if(pmap.arr[j] != i+1)
-                continue;
-
-            int x = j%pmap.w, y = j/pmap.w;
-            for(int d = 0; d < 8; d++) {
-                int t = getTile(pmap, x+ddirs[d*2], y+ddirs[d*2+1]);
-                if(t == 0)
-                    setTile(pmap, x+ddirs[d*2], y+ddirs[d*2+1], i+2);
-            }
-        }
-
-        if(stuck) {
-            stuckDuration++;
-            if(stuckDuration < 5)
-                continue;
-
-            free(pmap.arr);
-            pmap.arr = 0;
-            return pmap;
-        }
-        else
-            stuckDuration = 0;
-    }
-
-    return pmap;
-}*/
-
 struct map generatePathmap(struct unit *u, int x2, int y2) {
     struct map pmap;
     pmap.w = map.w*2;
@@ -208,16 +107,38 @@ struct map generatePathmap(struct unit *u, int x2, int y2) {
             }
     }
 
+    if(getTile(pmap, x2, y2) == -1) {
+        setTile(pmap, x2, y2, 1);
+
+        for(int i = 1; ; i++) {
+            bool spread = true;
+
+            for(int j = 0; j < pmap.w*pmap.h; j++) {
+                if(pmap.arr[j] != i)
+                    continue;
+
+                for(int d = 0; d < 4; d++) {
+                    int x = j%pmap.w+dirs[d*2], y = j/pmap.w+dirs[d*2+1];
+                    if(getTile(pmap, x, y) == -1) {
+                        setTile(pmap, x, y, i+1);
+                        spread = false;
+                    }
+                }
+            }
+
+            if(spread)
+                break;
+        }
+
+        for(int i = 0; i < pmap.w*pmap.h; i++)
+            if(pmap.arr[i] > 0)
+                pmap.arr[i] = -2;
+    }
+
     if(!stats.infantry)
         for(int i = 0; i < pmap.w*pmap.h-pmap.w-1; i++)
             if(pmap.arr[i+1] == -1 || pmap.arr[i+pmap.w] == -1 || pmap.arr[i+pmap.w+1] == -1)
                 pmap.arr[i] = -1;
-
-    if(getTile(pmap, u->x, u->y) == -1 || getTile(pmap, x2, y2) == -1) {
-        free(pmap.arr);
-        pmap.arr = 0;
-        return pmap;
-    }
 
     setTile(pmap, x2, y2, 1);
     setTile(pmap, u->x, u->y, 0);
@@ -305,4 +226,41 @@ void drawMap(int xo, int yo) {
             }
 		}
 	}
+}
+
+void initMinimap() {
+    minimapTex = SDL_CreateTexture(renderer,
+        SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
+        map.w, map.h);
+    SDL_SetRenderTarget(renderer, minimapTex);
+
+    for(int i = 0; i < map.w*map.h; i++) {
+        switch(map.arr[i]) {
+        case 0:
+            SDL_SetRenderDrawColor(renderer, 10, 48, 10, 0xff);
+            break;
+        case 1:
+        case 2:
+            SDL_SetRenderDrawColor(renderer, 20, 20, 120, 0xff);
+            break;
+        case 3:
+            SDL_SetRenderDrawColor(renderer, 80, 60, 40, 0xff);
+            break;
+        default:
+            continue;
+        }
+
+        SDL_RenderDrawPoint(renderer, i%map.w, i/map.w);
+    }
+
+    SDL_SetRenderTarget(renderer, disp);
+}
+
+void freeMinimap() {
+    SDL_DestroyTexture(minimapTex);
+}
+
+void drawMinimap() {
+    SDL_Rect dst = {WIDTH-40+4, 4, 40-8, 40-8};
+    SDL_RenderCopy(renderer, minimapTex, NULL, &dst);
 }

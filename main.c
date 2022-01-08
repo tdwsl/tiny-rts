@@ -4,18 +4,47 @@
 #include "map.h"
 #include "unit.h"
 #include "ui.h"
+#include "fov.h"
 
 #define EDGEPAN_SPEED 0.1
 
 struct unit *selectedUnit=0;
 float cameraX = 0, cameraY = 0;
-float cursorX = 80, cursorY = 60;
-float cursorXV = 0, cursorYV = 0;
+float cameraXV = 0, cameraYV = 0;
 
-void drawCursor() {
-    SDL_Rect src = {0, 0, 4, 4};
-    SDL_Rect dst = {(int)cursorX, (int)cursorY, 4, 4};
-    SDL_RenderCopy(renderer, uiTex, &src, &dst);
+void drawMinimapBox() {
+    int x1 = cameraX/8, y1 = cameraY/8;
+    int x2 = x1+(WIDTH-40)/8, y2 = y1+HEIGHT/8;
+
+    int udlr = 0;
+
+    if(x1 < 0) {
+        x1 = 0;
+        udlr |= 3;
+    }
+    if(y1 < 0) {
+        y1 = 0;
+        udlr |= 1;
+    }
+    if(x2 >= 32) {
+        x2 = 31;
+        udlr |= 4;
+    }
+    if(y2 >= 32) {
+        y2 = 31;
+        udlr |= 2;
+    }
+
+    x1 += WIDTH-40+4;
+    y1 += 4;
+    x2 += WIDTH-40+4;
+    y2 += 4;
+
+    SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0xff);
+    drawLine(x1, y1, x2, y1);
+    drawLine(x1, y2, x2+1, y2);
+    drawLine(x1, y1, x1, y2);
+    drawLine(x2, y1, x2, y2);
 }
 
 void draw() {
@@ -24,20 +53,20 @@ void draw() {
 
 	drawMap(-cameraX, -cameraY);
 	drawUnits(-cameraX, -cameraY);
+	drawFov(-cameraX, -cameraY);
 	if(selectedUnit)
         drawUnitUI(selectedUnit, -cameraX, -cameraY);
-	drawText(0, 0, "Hello, world!");
+
+    drawSidebar();
+
+    drawMinimap();
+    drawMinimapUnits();
+    drawMinimapFov();
+    drawMinimapBox();
 
 	drawCursor();
 
 	updateDisplay();
-}
-
-void getMouse() {
-    int mx, my;
-    Uint8 btn = getMouseState(&mx, &my);
-    cursorX = mx;
-    cursorY = my;
 }
 
 void rightClickMap(int mx, int my) {
@@ -50,19 +79,7 @@ void rightClickMap(int mx, int my) {
     struct unit *u = unitAt(tx, ty);
     if(u) {
         if(u == selectedUnit) {
-            if(tileBlocks(u->x/2, u->y/2, HEIGHTLEVEL_SHALLOW) == 1)
-                return;
-
-            struct unit_stats stats = getUnitStats(u->type);
-            for(int i = 0; i < stats.capacity; i++)
-                if(u->cargo[i]) {
-                    u->cargo[i]->x = u->x;
-                    u->cargo[i]->y = u->y;
-                    u->cargo[i]->px = u->x;
-                    u->cargo[i]->py = u->y;
-                    addUnit(u->cargo[i]);
-                    u->cargo[i] = 0;
-                }
+            unitUnload(u);
         }
 
         if(selectedUnit) {
@@ -103,16 +120,8 @@ void leftClickMap(int mx, int my) {
 }
 
 void update(int diff) {
-    cursorX += cursorXV*diff;
-    cursorY += cursorYV*diff;
-    if(cursorX < 0)
-        cursorX = 0;
-    if(cursorY < 0)
-        cursorY = 0;
-    if(cursorX >= 160)
-        cursorX = 160-1;
-    if(cursorY >= 120)
-        cursorY = 120-1;
+    int mx, my;
+    getMouseState(&mx, &my);
 
     updateUnits(diff);
 
@@ -123,23 +132,35 @@ void update(int diff) {
     if(!selected)
         selectedUnit = 0;
 
-    if(cursorX < 1)
+    if(mx < 1)
         cameraX -= EDGEPAN_SPEED*diff;
-    if(cursorY < 1)
+    if(my < 1)
         cameraY -= EDGEPAN_SPEED*diff;
-    if(cursorX >= 160-1)
+    if(mx >= WIDTH-1)
         cameraX += EDGEPAN_SPEED*diff;
-    if(cursorY >= 120-1)
+    if(my >= HEIGHT-1)
         cameraY += EDGEPAN_SPEED*diff;
 
-    if(cameraX < -80)
-        cameraX = -80;
-    if(cameraY < -60)
-        cameraY = -60;
-    if(cameraX+160 >= map.w*8+80)
-        cameraX = map.w*8+80-1 - 160;
-    if(cameraY+120 >= map.h*8+60)
-        cameraY = map.h*8+60-1 - 120;
+    cameraX += cameraXV*diff;
+    cameraY += cameraYV*diff;
+
+    if(cameraX < -WIDTH/2)
+        cameraX = -WIDTH/2;
+    if(cameraY < -HEIGHT/2)
+        cameraY = -HEIGHT/2;
+    if(cameraX+WIDTH >= map.w*8+WIDTH/2)
+        cameraX = map.w*8+WIDTH/2-1 - WIDTH;
+    if(cameraY+HEIGHT >= map.h*8+HEIGHT/2)
+        cameraY = map.h*8+HEIGHT/2-1 - HEIGHT;
+}
+
+void click() {
+    int mx, my;
+    Uint8 btn = getMouseState(&mx, &my);
+    if(btn & SDL_BUTTON_LMASK)
+        leftClickMap(mx, my);
+    if(btn & SDL_BUTTON_RMASK)
+        rightClickMap(mx, my);
 }
 
 int main() {
@@ -149,6 +170,8 @@ int main() {
 	vehicleTex = loadTexture("img/vehicles.bmp");
 	fontTex = loadTexture("img/font.bmp");
 	uiTex = loadTexture("img/ui.bmp");
+	sidebarTex = loadTexture("img/sidebar.bmp");
+	fovTex = loadTexture("img/fov.bmp");
 
 	loadMap("lvl/0/map.txt");
 	newUnit(8, 11, UNIT_BUGGY);
@@ -158,69 +181,56 @@ int main() {
 	newUnit(5, 1, UNIT_CARGOSHIP);
 	newUnit(14, 9, UNIT_TANK);
 
+	initFov();
+	initMinimap();
+
 	bool quit = false;
 	int lastUpdate = SDL_GetTicks();
 	int lastDraw = lastUpdate;
 
 	while(!quit) {
 		SDL_Event ev;
-		Uint8 btn;
 		while(SDL_PollEvent(&ev))
 			switch(ev.type) {
 			case SDL_QUIT:
 				quit = true;
 				break;
             case SDL_MOUSEBUTTONDOWN:
-                btn = getMouseState(NULL, NULL);
-                if(btn & SDL_BUTTON_LMASK)
-                    leftClickMap(cursorX, cursorY);
-                if(btn & SDL_BUTTON_RMASK)
-                    rightClickMap(cursorX, cursorY);
-                break;
-            case SDL_MOUSEMOTION:
-                getMouse();
+                click();
                 break;
             case SDL_KEYDOWN:
                 switch(ev.key.keysym.sym) {
                 case SDLK_UP:
-                    cursorYV = -0.05;
+                    cameraYV = -0.1;
                     break;
                 case SDLK_DOWN:
-                    cursorYV = 0.05;
+                    cameraYV = 0.1;
                     break;
                 case SDLK_LEFT:
-                    cursorXV = -0.05;
+                    cameraXV = -0.1;
                     break;
                 case SDLK_RIGHT:
-                    cursorXV = 0.05;
-                    break;
-                case SDLK_LCTRL:
-                case SDLK_RCTRL:
-                    rightClickMap(cursorX, cursorY);
-                    break;
-                case SDLK_SPACE:
-                case SDLK_RETURN:
-                    leftClickMap(cursorX, cursorY);
+                    cameraXV = 0.1;
                     break;
                 }
                 break;
             case SDL_KEYUP:
                 switch(ev.key.keysym.sym) {
                 case SDLK_UP:
-                    if(cursorYV < 0)
-                        cursorYV = 0;
+                    if(cameraYV < 0)
+                        cameraYV = 0;
                     break;
                 case SDLK_DOWN:
-                    if(cursorYV > 0)
-                        cursorYV = 0;
+                    if(cameraYV > 0)
+                        cameraYV = 0;
                     break;
                 case SDLK_LEFT:
-                    if(cursorXV < 0)
-                        cursorXV = 0;
+                    if(cameraXV < 0)
+                        cameraXV = 0;
                     break;
                 case SDLK_RIGHT:
-                    if(cursorXV > 0)
-                        cursorXV = 0;
+                    if(cameraXV > 0)
+                        cameraXV = 0;
                     break;
                 }
                 break;
@@ -235,6 +245,9 @@ int main() {
             lastDraw = currentTime;
         }
 	}
+
+	freeMinimap();
+	freeFov();
 
 	freeUnits();
 	free(map.arr);

@@ -34,6 +34,7 @@ struct unit {
     struct unit *target;
     struct unit *cargo[MAX_CARGOCAPACITY];
     struct unit *transport;
+    bool mapBlocked;
 };
 
 struct unit_stats {
@@ -59,5 +60,7 @@ void freeUnits();
 struct unit *unitAt(int x, int y);
 struct unit_stats getUnitStats(int type);
 void drawUnitUI(struct unit *u, int x, int y);
+void drawMinimapUnits();
+void unitUnload(struct unit *u);
 
 #endif
