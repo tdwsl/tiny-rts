@@ -34,6 +34,13 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Linker>
+			<Add library="m" />
+		</Linker>
+		<Unit filename="fov.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="fov.h" />
 		<Unit filename="initSDL.c">
 			<Option compilerVar="CC" />
 		</Unit>

@@ -1,31 +1,32 @@
 # depslib dependency file v1.0
-1641496917 source:/home/tyler/Documents/tiny-rts/initSDL.c
+1641661630 source:/home/tyler/Documents/tiny-rts/initSDL.c
 	<SDL2/SDL.h>
 	<stdlib.h>
 	<stdio.h>
 	<stdbool.h>
 	"initSDL.h"
 
-1641209421 /home/tyler/Documents/tiny-rts/initSDL.h
+1641676505 /home/tyler/Documents/tiny-rts/initSDL.h
 	<SDL2/SDL.h>
 
-1641496952 source:/home/tyler/Documents/tiny-rts/main.c
+1641684356 source:/home/tyler/Documents/tiny-rts/main.c
 	<SDL2/SDL.h>
 	<stdbool.h>
 	"initSDL.h"
 	"map.h"
 	"unit.h"
 	"ui.h"
+	"fov.h"
 
-1641285136 /home/tyler/Documents/tiny-rts/map.h
+1641676938 /home/tyler/Documents/tiny-rts/map.h
 	<SDL2/SDL.h>
 	"unit.h"
 
-1641412218 /home/tyler/Documents/tiny-rts/unit.h
+1641684600 /home/tyler/Documents/tiny-rts/unit.h
 	<SDL2/SDL.h>
 	<stdbool.h>
 
-1641412396 source:/home/tyler/Documents/tiny-rts/map.c
+1641684125 source:/home/tyler/Documents/tiny-rts/map.c
 	<SDL2/SDL.h>
 	<stdlib.h>
 	<stdbool.h>
@@ -33,7 +34,7 @@
 	"initSDL.h"
 	"unit.h"
 
-1641495491 source:/home/tyler/Documents/tiny-rts/unit.c
+1641684679 source:/home/tyler/Documents/tiny-rts/unit.c
 	<SDL2/SDL.h>
 	<stdlib.h>
 	<stdbool.h>
@@ -41,6 +42,7 @@
 	"initSDL.h"
 	"map.h"
 	"ui.h"
+	"fov.h"
 
 1641297989 source:/home/tyler/Documents/tiny-rts/drawText.c
 	<SDL2/SDL.h>
@@ -49,10 +51,25 @@
 
 1641297566 /home/tyler/Documents/tiny-rts/drawText.h
 
-1641301868 /home/tyler/Documents/tiny-rts/ui.h
+1641663559 /home/tyler/Documents/tiny-rts/ui.h
 
-1641302103 source:/home/tyler/Documents/tiny-rts/ui.c
+1641664084 source:/home/tyler/Documents/tiny-rts/ui.c
 	<SDL2/SDL.h>
 	"initSDL.h"
 	"ui.h"
+
+1641661369 /home/tyler/Documents/tiny-rts/vec.h
+
+1641677725 /home/tyler/Documents/tiny-rts/fov.h
+	<SDL2/SDL.h>
+	"map.h"
+
+1641677937 source:/home/tyler/Documents/tiny-rts/fov.c
+	<SDL2/SDL.h>
+	<stdlib.h>
+	<stdbool.h>
+	<math.h>
+	"fov.h"
+	"map.h"
+	"initSDL.h"
 
