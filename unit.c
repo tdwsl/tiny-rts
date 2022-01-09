@@ -17,6 +17,7 @@ void addUnit(struct unit *u) {
     numUnits++;
     units = realloc(units, sizeof(struct unit*)*numUnits);
     units[numUnits-1] = u;
+    unitRevealFov(u);
 }
 
 struct unit *newUnit(int x, int y, int type) {
@@ -117,18 +118,23 @@ struct unit_stats getUnitStats(int type) {
 }
 
 struct unit *unitAt(int x, int y) {
-    for(int i = numUnits-1; i >= 0; i--) {
-        struct unit *u = units[i];
-        struct unit_stats stats = getUnitStats(u->type);
-
-        if(u->x == x && u->y == y)
-            return u;
-
-        if(!stats.infantry)
-            if(u->x <= x && u->y <= y && u->x+1 >= x && u->y+1 >= y)
-                return u;
-    }
+    for(int i = numUnits-1; i >= 0; i--)
+        if(unitIsAt(units[i], x, y))
+            return units[i];
     return 0;
+}
+
+bool unitIsAt(struct unit *u, int x, int y) {
+    if(u->x == x && u->y == y)
+        return true;
+
+    struct unit_stats stats = getUnitStats(u->type);
+
+    if(!stats.infantry)
+        if(u->x <= x && u->y <= y && u->x+1 >= x && u->y+1 >= y)
+            return true;
+
+    return false;
 }
 
 void moveUnit(struct unit *u, int xm, int ym) {
@@ -159,7 +165,7 @@ void moveUnit(struct unit *u, int xm, int ym) {
     u->x = dx;
     u->y = dy;
 
-    revealFov(u->x/2, u->y/2, 5);
+    unitRevealFov(u);
 
     u->d = -1;
     for(int d = 0; d < 8 && u->d == -1; d++)
@@ -224,7 +230,7 @@ void updateUnits(int diff) {
         struct unit_stats stats = getUnitStats(u->type);
 
         if(getTile(fov, u->x/2, u->y/2))
-            revealFov(u->x/2, u->y/2, 5);
+            unitRevealFov(u);
 
         if(u->x != u->px || u->y != u->py) {
             float inc = stats.speed;
@@ -474,4 +480,8 @@ void unitUnload(struct unit *u) {
             addUnit(u->cargo[i]);
             u->cargo[i] = 0;
         }
+}
+
+void unitRevealFov(struct unit *u) {
+    revealFov(u->x/2, u->y/2, 10);
 }

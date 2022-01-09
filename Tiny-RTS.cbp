@@ -45,6 +45,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="initSDL.h" />
+		<Unit filename="level.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="level.h" />
 		<Unit filename="lvl/0/map.txt" />
 		<Unit filename="main.c">
 			<Option compilerVar="CC" />

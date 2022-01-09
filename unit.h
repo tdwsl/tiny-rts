@@ -62,5 +62,7 @@ struct unit_stats getUnitStats(int type);
 void drawUnitUI(struct unit *u, int x, int y);
 void drawMinimapUnits();
 void unitUnload(struct unit *u);
+void unitRevealFov(struct unit *u);
+bool unitIsAt(struct unit *u, int x, int y);
 
 #endif

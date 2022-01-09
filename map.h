@@ -44,8 +44,10 @@ void drawMap(int xo, int yo);
 void initMap(int w, int h, int t);
 int tileBlocks(int x, int y, int hlevel);
 struct map generatePathmap(struct unit *u, int x2, int y2);
-void initMinimap();
+SDL_Texture *initMinimap();
 void drawMinimap();
 void freeMinimap();
+void leftClickMinimap(int mx, int my);
+void rightClickMinimap(int mx, int my);
 
 #endif

@@ -41,8 +41,8 @@ void freeTextures() {
 
 void initSDL() {
     /* treat the touchpad like a mouse >:( */
-    sdlAssert(SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0"));
-    sdlAssert(SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "1"));
+    sdlAssert(SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0")); // dun' work
+    sdlAssert(SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "1")); //
 
 	sdlAssert(SDL_Init(SDL_INIT_EVERYTHING) >= 0);
 	sdlAssert(win = SDL_CreateWindow(WPARMS));

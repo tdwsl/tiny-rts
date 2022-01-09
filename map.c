@@ -227,8 +227,7 @@ void drawMap(int xo, int yo) {
 		}
 	}
 }
-
-void initMinimap() {
+SDL_Texture *initMinimap() {
     minimapTex = SDL_CreateTexture(renderer,
         SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
         map.w, map.h);
@@ -254,6 +253,7 @@ void initMinimap() {
     }
 
     SDL_SetRenderTarget(renderer, disp);
+    return minimapTex;
 }
 
 void freeMinimap() {
