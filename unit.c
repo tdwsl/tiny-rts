@@ -6,6 +6,7 @@
 #include "map.h"
 #include "ui.h"
 #include "fov.h"
+#include "level.h"
 
 SDL_Texture *infantryTex = NULL;
 SDL_Texture *vehicleTex = NULL;
@@ -20,13 +21,14 @@ void addUnit(struct unit *u) {
     unitRevealFov(u);
 }
 
-struct unit *newUnit(int x, int y, int type) {
+struct unit *newUnit(int x, int y, int type, int team) {
     struct unit *u = malloc(sizeof(struct unit));
     u->px = x;
     u->py = y;
     u->x = x;
     u->y = y;
     u->type = type;
+    u->team = team;
     u->progress = 0;
     u->d = 4;
     u->pd = 4;
@@ -165,7 +167,8 @@ void moveUnit(struct unit *u, int xm, int ym) {
     u->x = dx;
     u->y = dy;
 
-    unitRevealFov(u);
+    if(u->team == playerTeam)
+        unitRevealFov(u);
 
     u->d = -1;
     for(int d = 0; d < 8 && u->d == -1; d++)
@@ -229,7 +232,7 @@ void updateUnits(int diff) {
         struct unit *u = units[i];
         struct unit_stats stats = getUnitStats(u->type);
 
-        if(getTile(fov, u->x/2, u->y/2))
+        if(getTile(fov, u->x/2, u->y/2) && u->team == playerTeam)
             unitRevealFov(u);
 
         if(u->x != u->px || u->y != u->py) {
@@ -295,6 +298,9 @@ void unitTarget(struct unit *u, int tx, int ty) {
 }
 
 void unitTargetVehicle(struct unit *u, struct unit *v) {
+    if(u->team != v->team)
+        return;
+        
     struct unit_stats vstats = getUnitStats(v->type);
     struct unit_stats ustats = getUnitStats(u->type);
 
@@ -325,6 +331,16 @@ void drawUnits(int x, int y) {
     for(int i = 0; i < numUnits; i++) {
         struct unit *u = units[i];
         struct unit_stats stats = getUnitStats(u->type);
+        
+        bool visible = false;
+        for(int i = 0; i < 1+3*!stats.infantry; i++)
+            if(getTile(fov, (u->x+i%2)/2, (u->y+i/2)/2) == 0) {
+                visible = true;
+                break;
+            }
+        if(!visible)
+            continue;
+        
         SDL_Texture *tex;
         int sz;
 
@@ -382,6 +398,8 @@ void drawUnits(int x, int y) {
                 step = step%2 + 1;
             src.x += sz*step;
         }
+        
+        src.x += 32*(!stats.infantry+1) * u->team;
 
         SDL_Rect dst = {0,0,sz,sz};
         getUnitXY(u, &dst.x, &dst.y);
@@ -452,8 +470,16 @@ void drawMinimapUnits() {
 
         if(getTile(fov, u->x/2, u->y/2))
             return;
+            
+        switch(u->team) {
+        case TEAM_RED:
+            SDL_SetRenderDrawColor(renderer, 0xff, 0, 0, 0xff);
+            break;
+        case TEAM_BLUE:
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0xff, 0xff);
+            break;
+        }
 
-        SDL_SetRenderDrawColor(renderer, 0xff, 0, 0, 0xff);
         for(int j = 0; j < 4; j++)
             SDL_RenderDrawPoint(renderer, WIDTH-40+4+(((u->x+0.5)/2)/(float)fov.w)*32, 4+(((u->y+0.5)/2)/(float)fov.h)*32);
     }

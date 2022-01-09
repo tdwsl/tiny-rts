@@ -11,11 +11,11 @@ SDL_Texture *minimapTex = NULL;
 struct map map;
 
 void initMap(int w, int h, int t) {
-	map.arr = malloc(sizeof(int)*w*h);
-	map.w = w;
-	map.h = h;
-	for(int i = 0; i < w*h; i++)
-		map.arr[i] = t;
+    map.arr = malloc(sizeof(int)*w*h);
+    map.w = w;
+    map.h = h;
+    for(int i = 0; i < w*h; i++)
+        map.arr[i] = t;
 }
 
 void printMap(struct map map) {
@@ -27,28 +27,28 @@ void printMap(struct map map) {
 }
 
 int getTile(struct map map, int x, int y) {
-	if(x < 0 || y < 0 || x >= map.w || y >= map.h)
-		return -1;
-	return map.arr[y*map.w+x];
+    if(x < 0 || y < 0 || x >= map.w || y >= map.h)
+        return -1;
+    return map.arr[y*map.w+x];
 }
 
 void setTile(struct map map, int x, int y, int t) {
-	if(x >= 0 && y >= 0 && x < map.w && y < map.h)
-		map.arr[y*map.w+x] = t;
+    if(x >= 0 && y >= 0 && x < map.w && y < map.h)
+        map.arr[y*map.w+x] = t;
 }
 
 void loadMap(const char *filename) {
-	FILE *fp = fopen(filename, "r");
-	if(!fp) {
-		printf("Failed to open map '%s'\n", filename);
-		endSDL();
-		exit(1);
-	}
-	fscanf(fp, "%d%d", &map.w, &map.h);
-	map.arr = malloc(sizeof(int)*map.w*map.h);
-	for(int i = 0; i < map.w*map.h; i++)
-		fscanf(fp, "%d", &map.arr[i]);
-	fclose(fp);
+    FILE *fp = fopen(filename, "r");
+    if(!fp) {
+        printf("Failed to open map '%s'\n", filename);
+        endSDL();
+        exit(1);
+    }
+    fscanf(fp, "%d%d", &map.w, &map.h);
+    map.arr = malloc(sizeof(int)*map.w*map.h);
+    for(int i = 0; i < map.w*map.h; i++)
+        fscanf(fp, "%d", &map.arr[i]);
+    fclose(fp);
 }
 
 int blocks(int t, int hlevel) {
@@ -194,24 +194,24 @@ struct map generatePathmap(struct unit *u, int x2, int y2) {
 }
 
 void drawMap(int xo, int yo) {
-	for(int i = 0; i < map.w*map.h; i++) {
-		int t = 0;
-		int x = i%map.w, y = i/map.w;
-		static const int pwrs[] = {1, 2, 4, 8};
-		int st=-1;
-		int mt = map.arr[i];
+    for(int i = 0; i < map.w*map.h; i++) {
+        int t = 0;
+        int x = i%map.w, y = i/map.w;
+        static const int pwrs[] = {1, 2, 4, 8};
+        int st=-1;
+        int mt = map.arr[i];
 
-		if(mt == 3) {
+        if(mt == 3) {
             st = mt;
             mt = 0;
-		}
+        }
 
-		SDL_Rect dst = {x*8+xo, y*8+yo, 8, 8};
+        SDL_Rect dst = {x*8+xo, y*8+yo, 8, 8};
 
-		for(int d = 0; d < 4; d++) {
-			int at = getTile(map, x+dirs[d*2], y+dirs[d*2+1]);
-			if(at != mt && at != -1 && at != 2 && !(at == 3 && mt == 0))
-				t |= pwrs[d];
+        for(int d = 0; d < 4; d++) {
+            int at = getTile(map, x+dirs[d*2], y+dirs[d*2+1]);
+            if(at != mt && at != -1 && at != 2 && !(at == 3 && mt == 0))
+                t |= pwrs[d];
 
             if(d == 3) {
                 SDL_Rect src = {(t%8)*8, (t/8)*8+mt*16, 8, 8};
@@ -224,8 +224,8 @@ void drawMap(int xo, int yo) {
                     t = 0;
                 }
             }
-		}
-	}
+        }
+    }
 }
 SDL_Texture *initMinimap() {
     minimapTex = SDL_CreateTexture(renderer,

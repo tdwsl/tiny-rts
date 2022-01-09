@@ -11,29 +11,29 @@ void draw() {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xff);
     SDL_RenderClear(renderer);
 
-	float xd, yd;
-	getDragXY(&xd, &yd);
+    float xd, yd;
+    getDragXY(&xd, &yd);
 
-	float xo = -cameraX, yo = -cameraY;
-	if(dragging && (oldBtn & SDL_BUTTON_RMASK) && !clicking) {
-		xo -= xd;
-		yo -= yd;
-	}
+    float xo = -cameraX, yo = -cameraY;
+    if(dragging && (oldBtn & SDL_BUTTON_RMASK) && !clicking) {
+        xo -= xd;
+        yo -= yd;
+    }
 
-	drawMap(xo, yo);
-	drawUnits(xo, yo);
-	drawFov(xo, yo);
+    drawMap(xo, yo);
+    drawUnits(xo, yo);
+    drawFov(xo, yo);
 
-	for(int i = 0; i < numSelectedUnits; i++)
+    for(int i = 0; i < numSelectedUnits; i++)
         drawUnitUI(selectedUnits[i], xo, yo);
 
     drawSelectRect(xo, yo);
 
     drawSidebar();
 
-	drawCursor();
+    drawCursor();
 
-	updateDisplay();
+    updateDisplay();
 }
 
 void click() {
@@ -68,34 +68,36 @@ void update(int diff) {
 }
 
 int main() {
-	initSDL();
+    initSDL();
 
-	tileset = loadTexture("img/terrain.bmp");
-	infantryTex = loadTexture("img/infantry.bmp");
-	vehicleTex = loadTexture("img/vehicles.bmp");
-	fontTex = loadTexture("img/font.bmp");
-	uiTex = loadTexture("img/ui.bmp");
-	sidebarTex = loadTexture("img/sidebar.bmp");
-	fovTex = loadTexture("img/fov.bmp");
+    tileset = loadTexture("img/terrain.bmp");
+    infantryTex = loadTexture("img/infantry.bmp");
+    vehicleTex = loadTexture("img/vehicles.bmp");
+    fontTex = loadTexture("img/font.bmp");
+    uiTex = loadTexture("img/ui.bmp");
+    sidebarTex = loadTexture("img/sidebar.bmp");
+    fovTex = loadTexture("img/fov.bmp");
+    SDL_SetTextureAlphaMod(fovTex, 0xd0);
 
-	initLevel();
+    initLevel();
 
-	bool quit = false;
-	int lastUpdate = SDL_GetTicks();
-	int lastDraw = lastUpdate;
+    bool quit = false;
+    int lastUpdate = SDL_GetTicks();
+    int lastDraw = lastUpdate;
 
-	while(!quit) {
-		SDL_Event ev;
-		while(SDL_PollEvent(&ev))
-			switch(ev.type) {
-			case SDL_QUIT:
-				quit = true;
-				break;
+    while(!quit) {
+        SDL_Event ev;
+        while(SDL_PollEvent(&ev))
+            switch(ev.type) {
+            case SDL_QUIT:
+                quit = true;
+                break;
             case SDL_MOUSEBUTTONDOWN:
-                //click();
                 startDrag();
                 break;
             case SDL_MOUSEBUTTONUP:
+                if(!dragging)
+                  startDrag();
                 endDrag();
                 break;
             case SDL_KEYDOWN:
@@ -134,7 +136,7 @@ int main() {
                     break;
                 }
                 break;
-			}
+            }
 
         int currentTime = SDL_GetTicks();
         update(currentTime-lastUpdate);
@@ -144,10 +146,10 @@ int main() {
             draw();
             lastDraw = currentTime;
         }
-	}
+    }
 
-	endLevel();
+    endLevel();
 
-	endSDL();
-	return 0;
+    endSDL();
+    return 0;
 }

@@ -21,6 +21,7 @@ float oldCamX, oldCamY;
 bool dragging = false;
 bool clicking = true;
 Uint32 oldBtn;
+int playerTeam = TEAM_RED;
 
 void deselectUnit(struct unit *u) {
     for(int i = 0; i < numSelectedUnits; i++)
@@ -39,6 +40,8 @@ bool unitSelected(struct unit *u) {
 
 void selectUnit(struct unit *u) {
     if(unitSelected(u))
+        return;
+    if(u->team != playerTeam)
         return;
 
     numSelectedUnits++;
@@ -67,8 +70,12 @@ void rightClickMap(int mx, int my) {
 
             if(selectedUnit) {
                 struct unit_stats stats = getUnitStats(selectedUnit->type);
+                
                 if(!stats.infantry)
                     return;
+                if(u->team != playerTeam)
+                    return;
+                
                 struct unit_stats vstats = getUnitStats(u->type);
                 for(int i = 0; i < vstats.capacity; i++)
                     if(!u->cargo[i]) {
@@ -190,6 +197,9 @@ void startDrag() {
     oldCamX = cameraX;
     oldCamY = cameraY;
     oldBtn = getMouseState(&oldX, &oldY);
+    
+    if(oldX >= WIDTH-40+4 && oldY >= 4 && oldX < WIDTH-4 && oldY < 40-4)
+        dragging = false;
 }
 
 void updateLevel(int diff) {
@@ -253,16 +263,20 @@ void drawSelectRect(int x, int y) {
 }
 
 void initLevel() {
-	loadMap("lvl/0/map.txt");
-	newUnit(8, 11, UNIT_BUGGY);
-	newUnit(10, 11, UNIT_RIFLEMAN);
-	newUnit(10, 12, UNIT_ROCKETLAUNCHER);
-	newUnit(2, 1, UNIT_GUNBOAT);
-	newUnit(5, 1, UNIT_CARGOSHIP);
-	newUnit(14, 9, UNIT_TANK);
+    loadMap("lvl/0/map.txt");
+    newUnit(8, 11, UNIT_BUGGY, TEAM_RED);
+    newUnit(10, 11, UNIT_RIFLEMAN, TEAM_RED);
+    newUnit(10, 12, UNIT_ROCKETLAUNCHER, TEAM_RED);
+    newUnit(2, 1, UNIT_GUNBOAT, TEAM_RED);
+    newUnit(5, 1, UNIT_CARGOSHIP, TEAM_RED);
+    newUnit(14, 9, UNIT_TANK, TEAM_RED);
+    newUnit(40, 50, UNIT_GUNBOAT, TEAM_BLUE);
+    newUnit(38, 51, UNIT_GUNBOAT, TEAM_BLUE);
+    newUnit(42, 51, UNIT_GUNBOAT, TEAM_BLUE);
+    newUnit(40, 56, UNIT_CARGOSHIP, TEAM_BLUE);
 
-	initFov();
-	initMinimap();
+    initFov();
+    initMinimap();
 }
 
 void endLevel() {

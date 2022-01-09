@@ -24,6 +24,11 @@ enum {
     TARGET_VEHICLE,
 };
 
+enum {
+    TEAM_RED=0,
+    TEAM_BLUE,
+};
+
 struct unit {
     int x, y, px, py;
     float progress;
@@ -35,6 +40,7 @@ struct unit {
     struct unit *cargo[MAX_CARGOCAPACITY];
     struct unit *transport;
     bool mapBlocked;
+    int team;
 };
 
 struct unit_stats {
@@ -49,7 +55,7 @@ struct unit_stats {
 extern struct unit **units;
 extern int numUnits;
 
-struct unit *newUnit(int x, int y, int type);
+struct unit *newUnit(int x, int y, int type, int team);
 void addUnit(struct unit *u);
 void drawUnits(int x, int y);
 void updateUnits(int diff);

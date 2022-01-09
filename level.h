@@ -10,6 +10,7 @@ extern int numSelectedUnits;
 extern float cameraX, cameraY, cameraXV, cameraYV;
 extern Uint32 oldBtn;
 extern bool dragging, clicking;
+extern int playerTeam;
 
 void leftClickMap(int mx, int my);
 void rightClickMap(int mx, int my);
